@@ -1,4 +1,5 @@
 use itertools::Itertools;
+use std::collections::HashSet;
 
 fn main() {
     let input = [
@@ -18,11 +19,17 @@ fn main() {
         1261, 1429, 1863, 1540, 692,
     ];
 
-    let ans = input
+    let set: HashSet<_> = input.iter().collect();
+
+    let ans = input.iter().find(|&i| set.contains(&(2020 - i))).unwrap();
+
+    println!("{}", ans * (2020 - ans));
+
+    let (a, b) = input
         .iter()
-        .combinations(2)
-        .find(|v| v[0] + v[1] == 2020)
+        .tuple_combinations()
+        .find(|&(a, b)| set.contains(&(2020 - a - b)))
         .unwrap();
 
-    println!("{}", ans[0] * ans[1]);
+    println!("{}", a * b * (2020 - a - b));
 }
