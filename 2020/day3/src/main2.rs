@@ -21,7 +21,22 @@ fn main() {
 
 fn ski<'a>(it: impl Iterator<Item = &'a (usize, String)>, (rise, run): (usize, usize)) -> usize {
     it.step_by(rise)
-        .filter(|(lineno, line)| line.chars().cycle().nth(lineno * run).unwrap() == '#')
+        .map(|(n, l)| {
+            match l.chars().cycle().nth(n * run).unwrap() {
+                '#' => {
+                    let (s1, s2) = l.split_at((n * run) % l.len());
+                    println!("{}X{}", s1, s2);
+                }
+                '.' => {
+                    let (s1, s2) = l.split_at((n * run) % l.len());
+                    println!("{}O{}", s1, s2);
+                }
+
+                _ => unreachable!(),
+            }
+            (n, l)
+        })
+        .filter(|&(lineno, line)| line.chars().cycle().nth(lineno / rise * run).unwrap() == '#')
         .count()
 }
 
