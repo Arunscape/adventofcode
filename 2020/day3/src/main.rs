@@ -7,7 +7,9 @@ fn main() {
         .lock()
         .lines()
         .flatten()
-        .map(|line| line.chars().cycle());
+        .enumerate()
+        .filter(|(lineno, line)| line.chars().cycle().nth(lineno * 3).unwrap() == '#')
+        .count();
 
     println!("{}", ans);
 }
