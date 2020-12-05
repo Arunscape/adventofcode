@@ -20,7 +20,7 @@ fn find_column(s: &str) -> u16 {
         .fold(0, |acc, b| acc * 2 + b)
 }
 
-fn find_id(s: String) -> u16 {
+pub fn find_id(s: String) -> u16 {
     find_row(&s[..7]) * 8 + find_column(&s[7..])
 }
 
