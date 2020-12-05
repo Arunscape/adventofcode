@@ -15,37 +15,37 @@ fn main() -> io::Result<()> {
                 println!("{}", &field[..3]);
                 match &field[..3] {
                     "byr" => {
-                        println!("should be between 1920-2002: {}", &field[4..]);
+                        //println!("should be between 1920-2002: {}", &field[4..]);
                         let year: usize = field[4..].parse().unwrap();
                         if (1920..=2002).contains(&year) {
                             count += 1;
                         }
                     }
                     "iyr" => {
-                        println!("should be between 2010-2020: {}", &field[4..]);
+                        //println!("should be between 2010-2020: {}", &field[4..]);
                         let year: usize = field[4..].parse().unwrap();
                         if (2010..=2020).contains(&year) {
                             count += 1;
                         }
                     }
                     "eyr" => {
-                        println!("should be between 2010-2020: {}", &field[4..]);
+                        //println!("should be between 2010-2020: {}", &field[4..]);
                         let year: usize = field[4..].parse().unwrap();
-                        if (2010..=2030).contains(&year) {
+                        if (2020..=2030).contains(&year) {
                             count += 1;
                         }
                     }
                     "hgt" => {
-                        println!("should be in or cm: {}", &field[field.len() - 2..]);
+                        //println!("should be in or cm: {}", &field[field.len() - 2..]);
                         if match &field[field.len() - 2..] {
                             "cm" => {
                                 let height = field[4..7].parse();
-                                println!("height: {:?}", height);
+                                //println!("height: {:?}", height);
                                 height.is_ok() && (150..=193).contains(&height.unwrap())
                             }
                             "in" => {
                                 let height = field[4..6].parse();
-                                println!("height: {:?}", height);
+                                //println!("height: {:?}", height);
                                 height.is_ok() && (59..=76).contains(&height.unwrap())
                             }
                             _ => false,
@@ -54,7 +54,8 @@ fn main() -> io::Result<()> {
                         }
                     }
                     "hcl" => {
-                        if field[4..].chars().all(char::is_alphanumeric) {
+                        println!("{}", &field[5..]);
+                        if field[5..].len() == 6 && field[5..].chars().all(char::is_alphanumeric) {
                             count += 1;
                         }
                     }
@@ -67,7 +68,7 @@ fn main() -> io::Result<()> {
                         }
                     }
                     "pid" => {
-                        if field[4..].chars().all(char::is_numeric) {
+                        if field[4..].len() == 9 && field[4..].chars().all(char::is_numeric) {
                             count += 1;
                         }
                     }
