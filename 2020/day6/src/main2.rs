@@ -1,3 +1,5 @@
+#![feature(iterator_fold_self)]
+
 use std::{
     collections::HashSet,
     io::{self, Read},
@@ -13,9 +15,10 @@ fn main() -> io::Result<()> {
         .iter()
         .map(|&group| {
             group
-                .chars()
-                .filter(char::is_ascii_lowercase)
-                .collect::<HashSet<_>>()
+                .split_whitespace()
+                .map(|person| person.chars().collect::<HashSet<_>>())
+                .fold_first(|a, b| a.intersection(&b).map(|&c| c).collect::<HashSet<char>>())
+                .unwrap()
                 .len()
         })
         .sum();
