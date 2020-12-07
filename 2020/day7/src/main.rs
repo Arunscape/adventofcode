@@ -1,23 +1,22 @@
 use std::{
-    collections::HashMap,
+    collections::{HashMap, HashSet},
     io::{self, BufRead},
 };
 
 fn main() {
-    let mut map: HashMap<String, Vec<(String, u32)>> = HashMap::new();
+    let mut map: HashMap<String, Vec<String>> = HashMap::new();
 
-    io::stdin().lock().lines().flatten().for_each(|line| {
+    for line in io::stdin().lock().lines().flatten() {
         let mut line = line.split(" contain ");
 
         let parent_bag: String = line.next().unwrap().split(" bag").take(1).collect();
 
         let children_bags = line.next().unwrap();
         if children_bags.contains("no other bags") {
-            map.insert(parent_bag, Vec::new());
-            return;
+            continue;
         }
 
-        let mut children_bags: Vec<(String, u32)> = children_bags
+        let children_bags: Vec<(String, u32)> = children_bags
             .split(", ")
             .map(|bag| bag.split(" bag").take(1).collect::<String>())
             .map(|bag| {
@@ -28,8 +27,22 @@ fn main() {
             })
             .collect();
 
-        map.entry(parent_bag)
-            .and_modify(|e| e.append(&mut children_bags))
-            .or_insert(children_bags);
-    });
+        for (bag, _) in children_bags {
+            map.entry(bag)
+                .and_modify(|e| e.push(parent_bag.clone()))
+                .or_insert_with(|| vec![parent_bag.clone()]);
+        }
+    }
+
+    fn recurse_count(map: &HashMap<String, Vec<String>>, set: &mut HashSet<String>, key: &str) {
+        set.insert(key.into());
+        if let Some(vec) = map.get(key) {
+            for bag in vec {
+                recurse_count(map, set, bag);
+            }
+        }
+    }
+    let mut set = HashSet::new();
+    recurse_count(&map, &mut set, "shiny gold");
+    println!("{}", set.len() - 1);
 }
