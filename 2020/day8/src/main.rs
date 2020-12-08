@@ -32,7 +32,6 @@ fn main() -> io::Result<()> {
     let mut pc = 0;
     let mut acc = 0;
     loop {
-        println!("{} acc: {}", input[pc as usize], acc);
         if let Some(val) = visited.get(&pc) {
             if *val == 1 {
                 println!("{}", acc);
@@ -42,6 +41,5 @@ fn main() -> io::Result<()> {
 
         visited.entry(pc).and_modify(|n| *n += 1).or_insert(1);
         execute(input[pc as usize], &mut pc, &mut acc);
-        println!("acc changed to {}", acc);
     }
 }
