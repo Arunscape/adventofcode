@@ -8,7 +8,7 @@ fn execute(instruction: &str, pc: &mut isize, acc: &mut isize) {
     let (instruction, num) = instruction.split_once(' ').unwrap();
     let num: isize = num.parse().unwrap();
 
-    match instruction {
+    let ret = match instruction {
         "nop" => *pc += 1,
         "acc" => {
             *pc += 1;
@@ -16,7 +16,10 @@ fn execute(instruction: &str, pc: &mut isize, acc: &mut isize) {
         }
         "jmp" => *pc += num,
         _ => unreachable!(),
-    }
+    };
+
+    println!("acc: {}", acc);
+    ret
 }
 
 fn main() -> io::Result<()> {
@@ -29,32 +32,31 @@ fn main() -> io::Result<()> {
     // line number and times visited
     let mut visited: HashMap<isize, usize> = HashMap::new();
 
-    let mut pc = 0;
-    let mut acc = 0;
+    'outer: for (num, _) in input.iter().enumerate() {
+        let mut input2: Vec<String> = input.iter().map(|s| s.to_string()).collect();
 
-    for (n, line) in input.iter().enumerate() {
-        let mut input = input.clone();
+        if input2[num].contains("jmp") {
+            input2[num] = input[num].replace("jmp", "nop");
+        } else if input2[num].contains("nop") {
+            input2[num] = input[num].replace("nop", "jmp");
+        } else {
+            continue 'outer;
+        }
+        let mut pc = 0;
+        let mut acc = 0;
+        visited = HashMap::new();
 
-        let x = input[n].replace("jmp", "nop");
-        input[n] = &x;
-        let y = input[n].replace("nop", "jmp");
-        input[n] = &y;
-
-        loop {
-            println!("{} acc: {}", input[pc as usize], acc);
-
-            if let Some(v) = visited.get(&pc) {
-                if *v == 1 {
-                    pc = 0;
-                    acc = 0;
-                    break;
+        'inner: loop {
+            println!("{} | {}", input2[pc as usize], acc);
+            if let Some(&val) = visited.get(&pc) {
+                if val == 1 {
+                    println!("{}", acc);
+                    continue 'outer;
                 }
             }
-            //println!("{}", input[pc as usize]);
+
             visited.entry(pc).and_modify(|n| *n += 1).or_insert(1);
-            execute(input[pc as usize], &mut pc, &mut acc);
-            //std::thread::sleep(std::time::Duration::new(1, 0));
-            println!("acc changed to {}", acc);
+            execute(&input2[pc as usize], &mut pc, &mut acc);
         }
     }
     Ok(())
