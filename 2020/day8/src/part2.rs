@@ -47,6 +47,10 @@ fn main() -> io::Result<()> {
         visited = HashMap::new();
 
         'inner: loop {
+            if pc == input2.len() as isize {
+                println!("we found it: {}", input[num]);
+                return Ok(());
+            }
             println!("{} | {}", input2[pc as usize], acc);
             if let Some(&val) = visited.get(&pc) {
                 if val == 1 {

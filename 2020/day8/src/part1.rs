@@ -39,6 +39,11 @@ fn main() -> io::Result<()> {
             }
         }
 
+        if pc as usize == input.len() {
+            println!("halted: acc is {}", acc);
+            return Ok(());
+        }
+
         visited.entry(pc).and_modify(|n| *n += 1).or_insert(1);
         execute(input[pc as usize], &mut pc, &mut acc);
     }
