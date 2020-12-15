@@ -53,4 +53,11 @@ impl Point {
     pub fn manhattan_distance(p1: Self, p2: Self) -> isize {
         (p1.0 - p2.0).abs() + (p1.1 - p2.1).abs()
     }
+
+    pub fn rotate(&self, degree: f64) -> Self {
+        let cos = degree.to_radians().cos() as isize;
+        let sin = degree.to_radians().sin() as isize;
+
+        Point(self.0 * cos - self.1 * sin, self.0 * sin + self.1 * cos)
+    }
 }
