@@ -48,3 +48,9 @@ impl std::ops::AddAssign for Point {
         *self = *self + other
     }
 }
+
+impl Point {
+    pub fn manhattan_distance(p1: Self, p2: Self) -> isize {
+        (p1.0 - p2.0).abs() + (p1.1 - p2.1).abs()
+    }
+}
