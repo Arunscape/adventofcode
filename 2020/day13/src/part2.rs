@@ -10,13 +10,9 @@ fn main() {
         .unwrap()
         .split(',')
         .enumerate()
-        .map(|(p, s)| (p, s.parse().unwrap_or(0)))
-        .filter(|(_, n)| n > &0)
+        .filter(|&(_, s)| s != "x")
+        .map(|(p, s)| (p, s.parse().unwrap()))
         .collect();
-
-    let x = 5_usize.div_euclid(3);
-
-    dbg!(x);
 
     // turns out the bus ids are prime numbers
     // something Chinese Remainder Theorem
@@ -30,10 +26,17 @@ fn main() {
     //
     // i.e. x = ai (mod ni)
 
-    let product: usize = busses.iter().map(|(id, _)| id).product();
     // told by the problem to start search here
-    let mut r: std::ops::Range<usize> = 100000000000000..product;
+    let mut time = 100000000000000;
+    let mut increment = 1;
 
     // sieve is faster if n1 > n2 > .. > nk
-    for (&id, &n) in busses.iter().rev() {}
+    for (n, id) in busses.into_iter().rev() {
+        while (time + n) % id != 0 {
+            time += increment
+        }
+        increment *= id;
+    }
+
+    println!("{}", time);
 }
