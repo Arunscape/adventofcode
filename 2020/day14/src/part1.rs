@@ -30,20 +30,20 @@ impl From<String> for Instruction {
 fn main() {
     let mut mem: HashMap<u64, u64> = HashMap::new();
 
-    let mut mask = Instruction::Mask { ones: 0, zeros: 0 };
+    let mut ones = 0;
+    let mut zeros = 0;
 
     for line in io::stdin().lock().lines().flatten() {
         let instruction = Instruction::from(line);
         match instruction {
-            Instruction::Mask { ones: _, zeros: _ } => {
-                mask = instruction;
+            Instruction::Mask { ones: o, zeros: z } => {
+                ones = o;
+                zeros = z;
             }
             Instruction::Mem { pos, val } => {
-                if let Instruction::Mask { ones, zeros } = mask {
-                    let val = val | ones;
-                    let val = val & zeros;
-                    mem.entry(pos).and_modify(|v| *v = val).or_insert(val);
-                }
+                let val = val | ones;
+                let val = val & zeros;
+                mem.insert(pos, val);
             }
         };
     }
