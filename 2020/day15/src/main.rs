@@ -38,13 +38,13 @@ impl Game {
 impl Iterator for Game {
     type Item = usize;
     fn next(&mut self) -> Option<usize> {
+        self.index += 1;
+        let index = self.index;
         if self.first_time_last_has_been_spoken() {
-            self.index += 1;
-            if let Some(v) = self.hashmap.get_mut(&0) {
-                v.push(self.index);
-            } else {
-                self.hashmap.insert(0, vec![self.index]);
-            }
+            self.hashmap
+                .entry(0)
+                .and_modify(|v| v.push(index))
+                .or_insert_with(|| vec![index]);
             self.last_said = 0;
             return Some(0);
         }
@@ -54,13 +54,11 @@ impl Iterator for Game {
         let previously_spoken_indexes = self.hashmap.get_mut(&self.last_said).unwrap();
         let last_said_index = previously_spoken_indexes[previously_spoken_indexes.len() - 2];
 
-        self.last_said = self.index - last_said_index;
-        self.index += 1;
-        if let Some(v) = self.hashmap.get_mut(&self.last_said) {
-            v.push(self.index);
-        } else {
-            self.hashmap.insert(self.last_said, vec![self.index]);
-        }
+        self.last_said = self.index - last_said_index - 1;
+        self.hashmap
+            .entry(self.last_said)
+            .and_modify(|v| v.push(index))
+            .or_insert_with(|| vec![index]);
         Some(self.last_said)
     }
 }
