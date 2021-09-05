@@ -1,9 +1,11 @@
 #![feature(iter_zip)]
-use std::collections::HashSet;
-use std::io::{self, Read};
-use std::num::ParseIntError;
-use std::result::Result;
-use std::str::FromStr;
+use std::{
+    collections::{HashMap, HashSet},
+    io::{self, Read},
+    num::ParseIntError,
+    result::Result,
+    str::FromStr,
+};
 
 fn main() -> Result<(), Box<dyn std::error::Error>> {
     let mut input = String::new();
@@ -40,9 +42,74 @@ fn main() -> Result<(), Box<dyn std::error::Error>> {
 
     println!("Part 1 answer: {}", sum);
 
-    let valid_nearby_tickets = nearby_tickets.iter().filter(|t| !t.is_invalid(&rules));
+    let valid_nearby_tickets: Vec<_> = nearby_tickets
+        .iter()
+        .filter(|t| !t.is_invalid(&rules))
+        .collect();
     //dbg!(&valid_nearby_tickets);
 
+    let indices = rules.rules.len();
+    let indices = 0..indices;
+
+    let mut index_tracker: HashMap<String, HashSet<usize>> = HashMap::new();
+
+    for field in rules.rules.iter() {
+        let name = &field.name;
+        let range = &field.valid_numbers;
+
+        let index: HashSet<usize> = indices
+            .clone()
+            .filter(|&i| {
+                valid_nearby_tickets
+                    .iter()
+                    .all(|t| range.contains(&t.ticket[i]))
+            })
+            .collect();
+        println!("{} is at index {:?}", name, index);
+        index_tracker.insert(name.to_owned(), index);
+    }
+
+    let mut solved: HashMap<String, usize> = index_tracker
+        .iter()
+        .filter(|(name, set)| set.len() == 1)
+        .map(|(name, set)| (name.to_owned(), *set.iter().next().unwrap()))
+        .collect();
+
+    let mut unsolved: HashMap<String, HashSet<usize>> = index_tracker
+        .iter()
+        .filter(|(name, set)| set.len() > 1)
+        .map(|(name, set)| (name.to_owned(), set.clone()))
+        .collect();
+
+    loop {
+        if solved.len() == rules.rules.len() {
+            break;
+        }
+
+        for (name, set) in unsolved.iter_mut() {
+            for (_, num) in solved.iter() {
+                set.remove(num);
+            }
+
+            if set.len() == 1 {
+                solved.insert(name.to_owned(), *set.iter().next().unwrap());
+            }
+        }
+    }
+
+    for (name, &index) in solved.iter() {
+        println!(
+            "{} is index {}, for my ticket, that's: {}",
+            name, index, my_ticket.ticket[index]
+        );
+    }
+
+    let part2: usize = solved
+        .iter()
+        .filter(|(name, _)| name.contains("departure"))
+        .map(|(_, &num)| &my_ticket.ticket[num])
+        .product();
+    println!("Part 2: {}", part2);
     Ok(())
 }
 
@@ -122,7 +189,7 @@ impl Rule {
     }
 
     fn is_invalid(&self, ticket: &Ticket) -> bool {
-        ticket
+        !ticket
             .ticket
             .iter()
             .all(|num| self.valid_numbers.contains(num))
