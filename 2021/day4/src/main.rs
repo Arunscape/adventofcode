@@ -1,4 +1,6 @@
 use std::fmt::Write;
+use std::io::{self, BufRead, Read};
+use std::str::FromStr;
 
 #[derive(Debug)]
 struct BingoBoard {
@@ -23,11 +25,21 @@ impl std::fmt::Display for BingoBoard {
     }
 }
 
+impl FromStr for BingoBoard {
+    type Err = std::num::ParseIntError;
+
+    fn from_str(s: &str) -> Result<Self, Self::Err> {
+        let x = Self::new(&s)?;
+        Ok(x)
+    }
+
+}
+
 
 
 impl BingoBoard {
-    pub fn new(input: &[&str; 5]) -> Self {
-        let board: Vec<_> = input.iter().map(|line| {
+    pub fn new(input: &str) -> Result<Self, std::num::ParseIntError> {
+        let board: Vec<_> = input.lines().map(|line| {
 
             let l: Vec<BingoCell> = line
                 .split_whitespace()
@@ -47,7 +59,9 @@ impl BingoBoard {
 
         let board = board.try_into().unwrap();
 
-        Self { board }
+        let x = Self { board };
+
+        Ok(x)
     }
 
     pub fn process_one(&mut self, n: usize) {
@@ -58,6 +72,51 @@ impl BingoBoard {
 
     pub fn process_many(&mut self, nums: &[usize]) {
         nums.iter().for_each(|&n| self.process_one(n));
+    }
+
+    pub fn is_winner(&self) -> bool {
+        for row in self.board.iter() {
+            if row.iter().all(BingoCell::is_marked) {
+                return true;
+            }
+        }
+
+        for i in 0..5 {
+            if self.board.iter().map(|line| line.iter().nth(i).unwrap()).all(BingoCell::is_marked) {
+                return true;
+            }
+        }
+
+        // IF YOU COULD READ YOU WOULD HAVE SEEN THAT DIAGONALS DON'T COUNT DUMBASS
+        // if (0..5).map(|i| &self.board[i][i]).all(BingoCell::is_marked) {
+        //     return true;
+        // }
+
+        // if (0..5).map(|i| &self.board[i][4-i]).all(BingoCell::is_marked) {
+        //     return true;
+        // }
+
+        false
+    }
+
+
+    pub fn is_winner_with_score(&mut self, n: usize) -> Option<usize> {
+    
+        self.process_one(n);
+
+        if !self.is_winner() {
+            return None;
+        }
+
+
+        let score: usize = self.board.iter().flatten().filter(|c| !c.is_marked()).map(|c| c.number).sum();
+
+        println!("sum: {score}");
+
+        let score = score * n;
+
+        Some(score)
+
     }
 }
 
@@ -103,19 +162,35 @@ impl From<usize> for BingoCell {
     }
 }
 
-fn main() {
-    let input = [
-        "22 13 17 11  0",
-        " 8  2 23  4 24",
-        "21  9 14 16  7",
-        " 6 10  3 18  5",
-        " 1 12 20 15 19",
-    ];
+fn main() -> std::io::Result<()> {
+    let mut input = String::new();
+
+    std::io::stdin().read_to_string(&mut input)?;
+
+    let mut input = input.split("\n\n");
+
+    let nums: Vec<usize> = input.next().unwrap().split(",").flat_map(str::parse::<usize>).collect();
+
+    dbg!(&nums);
 
 
-    let b = BingoBoard::new(&input);
+    let mut boards : Vec<BingoBoard> = input.flat_map(|s| BingoBoard::from_str(s)).collect();
 
-    println!("{b}");
 
-    println!("Hello, world!");
+
+    for n in nums.iter() {
+
+        for (i, board) in boards.iter_mut().enumerate() {
+            if let Some(score) = board.is_winner_with_score(*n) {
+                println!("score: {score} | winning number: {n} | winning board: {i}");
+                println!("{board}");
+                return Ok(());
+            }
+        }
+    }
+
+
+   panic!("did not find solution");
 }
+
+
