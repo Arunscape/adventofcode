@@ -67,16 +67,17 @@ fn main() {
                 pwd = unsafe {(*pwd).children[tokens[2]]}
             }
         } else if tokens[0] == "dir" {
-                let mut new_dir = Tree {
+                let new_dir = Tree {
                     name: tokens[1].into(),
                     children: HashMap::new(),
                     parent: Some(pwd),
                     filetype: FileType::Dir,
                 };
 
+                let new_dir = Box::into_raw(Box::new(new_dir));
 
 
-                unsafe { (*pwd).children.insert(tokens[1].into(), &mut new_dir) };
+                unsafe { (*pwd).children.insert(tokens[1].into(), new_dir) };
                 println!("  created dir '{}'", tokens[1]);
         } else {
             println!("  todo add file to dir");
