@@ -38,20 +38,8 @@ impl Rope {
 
         let (dy, dx) = (*y - *j, *x - *i);
 
-        if dy.abs() < 1 {
-        } else if dy < 1 {
-            *j -= 1;
-        } else if 1 < dy {
-            *j += 1;
-        }
-
-        if dx.abs() < 1 {
-        } else if dx < 1 {
-            *i -= 1;
-        } else if 1 < dx {
-            *i += 1;
-        }
-
+    
+        // todo rethink this
         self.tail_visited.insert(self.tail);
 
         self.move_head(direction, n - 1);
