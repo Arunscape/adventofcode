@@ -78,38 +78,56 @@ fn score(input: &Array2<u32>, (x, y): (usize, usize), height: u32) -> usize {
         return 0;
     }
 
-    println!("({y},{x}): {height}");
+    println!("({x},{y}): {height}");
 
-    let left = input.row(x);
-    let left = left.slice(s![..y]);
-    let left = left.iter().rev().take_while(|&&t| t < height);
-    let left: Vec<u32> = left.cloned().collect();
-    dbg!(&left);
-    let left = left.len() + 1;
-    dbg!(&left);
 
-    let right = input.row(x);
-    let right = right.slice(s![y + 1..]);
-    let right = right.iter().take_while(|&&t| t < height);
-    let right: Vec<u32> = right.cloned().collect();
-    dbg!(&right);
-    let right = right.len() + 1;
-    dbg!(&right);
-
-    let up = input.column(y);
-    let up = up.slice(s![..x]);
-    let up = up.iter().rev().take_while(|&&t| t < height);
-    let up: Vec<u32> = up.cloned().collect();
-    dbg!(&up);
-    let up = up.len() + 1;
+    let mut up = 0;
+    for &t in input.column(y).slice(s![..x]).iter().rev() {
+        if t < height {
+            println!("up: {t}");
+            up += 1;
+        } else {
+            up += 1;
+            break;
+        }
+    }
     dbg!(&up);
 
-    let down = input.column(y);
-    let down = down.slice(s![x + 1..]);
-    let down = down.iter().rev().take_while(|&&t| t < height);
-    let down: Vec<u32> = down.cloned().collect();
+    let mut left = 0;
+    for &t in input.row(x).slice(s![..y]).iter().rev() {
+        if t < height {
+            println!("left: {t}");
+            left += 1;
+        } else {
+            left += 1;
+            break;
+        }
+    }
+    dbg!(&left);
+
+    let mut down = 0;
+    for &t in input.column(y).slice(s![x + 1..]).iter(){
+        if t < height {
+            println!("down: {t}");
+            down += 1;
+        } else {
+            down += 1;
+            break;
+        }
+    }
     dbg!(&down);
-    let down = down.len() + 1;
-    dbg!(&down);
+    
+    let mut right = 0;
+    for &t in input.row(x).slice(s![y + 1..]).iter(){
+        if t < height {
+            println!("right: {t}");
+            right += 1;
+        } else {
+            right += 1;
+            break;
+        }
+    }
+    dbg!(&right);
+
     left * right * up * down
 }
