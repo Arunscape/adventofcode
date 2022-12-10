@@ -79,46 +79,37 @@ fn score(input: &Array2<u32>, (x, y): (usize, usize), height: u32) -> usize {
     }
 
     println!("({y},{x}): {height}");
-    print!("  left: [");
-    let left = input
-        .row(x);
-    let left = left
-        .slice(s![..y]);
-    let left = left
-        .iter()
-        .rev()
-        .take_while(|&&t| t <= height);
 
+    let left = input.row(x);
+    let left = left.slice(s![..y]);
+    let left = left.iter().rev().take_while(|&&t| t < height);
     let left: Vec<u32> = left.cloned().collect();
-    let left = left.len();
-    println!(" ] count: {left}");
-    print!("  right: [");
-    let right = input
-        .row(x)
-        .slice(s![y + 1..])
-        .iter()
-        .take_while(|&&t| {
-            t <= height
-        })
-    let up = input
-        .column(y)
-        .slice(s![..x])
-        .iter()
-        .rev()
-        .take_while(|&&t| {
-            t <= height
-        })
-        .count()
-        + 1;
-    let down = input
-        .column(y)
-        .slice(s![x + 1..])
-        .iter()
-        .rev()
-        .take_while(|&&t| {
-            t <= height
-        })
-        .count()
-        + 1;
+    dbg!(&left);
+    let left = left.len() + 1;
+    dbg!(&left);
+
+    let right = input.row(x);
+    let right = right.slice(s![y + 1..]);
+    let right = right.iter().take_while(|&&t| t < height);
+    let right: Vec<u32> = right.cloned().collect();
+    dbg!(&right);
+    let right = right.len() + 1;
+    dbg!(&right);
+
+    let up = input.column(y);
+    let up = up.slice(s![..x]);
+    let up = up.iter().rev().take_while(|&&t| t < height);
+    let up: Vec<u32> = up.cloned().collect();
+    dbg!(&up);
+    let up = up.len() + 1;
+    dbg!(&up);
+
+    let down = input.column(y);
+    let down = down.slice(s![x + 1..]);
+    let down = down.iter().rev().take_while(|&&t| t < height);
+    let down: Vec<u32> = down.cloned().collect();
+    dbg!(&down);
+    let down = down.len() + 1;
+    dbg!(&down);
     left * right * up * down
 }
