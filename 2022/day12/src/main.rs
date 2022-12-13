@@ -1,7 +1,7 @@
 #![feature(mixed_integer_ops)]
 use ndarray::prelude::*;
+use std::collections::{HashMap, HashSet, VecDeque};
 use std::io::{self, BufRead};
-use std::collections::{HashMap, VecDeque, HashSet};
 
 struct Graph {
     graph: Array2<char>,
@@ -10,23 +10,20 @@ struct Graph {
 type Coord = (usize, usize);
 
 impl Graph {
-    fn possible_next(&self, coord: Coord) -> Vec<(Coord, char)> {
+    fn possible_next(&self, coord: Coord) -> Vec<Coord> {
         let up = self.get_point(coord, (-1, 0));
         let down = self.get_point(coord, (1, 0));
         let left = self.get_point(coord, (0, -1));
         let right = self.get_point(coord, (0, 1));
 
-        let ch: char = *self.graph.get(coord).unwrap();
+        let curr_ch: char = *self.graph.get(coord).unwrap();
 
         [up, down, left, right]
             .iter()
             .flatten()
             .filter_map(|&c| {
-                if c.1 == 'E' {
-                    Some(c)
-                } else if c.1 == 'S' {
-                    None
-                } else if c.1 as u32 - 1 <= ch as u32 {
+                let next_ch = self.graph.get(c)?;
+                if *next_ch as u32 - 1 <= curr_ch as u32 {
                     Some(c)
                 } else {
                     None
@@ -34,16 +31,13 @@ impl Graph {
             })
             .collect()
     }
-    fn get_point(&self, (i, j): Coord, offset: (isize, isize)) -> Option<(Coord, char)> {
+    fn get_point(&self, (i, j): Coord, offset: (isize, isize)) -> Option<Coord> {
         let m = i.checked_add_signed(offset.0)?;
         let n = j.checked_add_signed(offset.1)?;
-        let c = self.graph.get((m, n))?;
-
-        Some(((m, n), *c))
+        Some((m, n))
     }
 
-    fn shortest_path_bfs(&self, start: Coord, target: Coord) -> Vec<Coord> {
-        
+    fn shortest_path_bfs(&self, start: Coord, target: Coord) -> Option<Vec<Coord>> {
         let mut visited: HashSet<Coord> = HashSet::new();
         let mut q = VecDeque::new();
 
@@ -52,37 +46,41 @@ impl Graph {
 
         let mut parent: HashMap<Coord, Coord> = HashMap::new();
 
+        let mut found: Option<Coord> = None;
         while let Some(v) = q.pop_front() {
             if v == target {
+                println!("found it for starting point {start:?}");
+                found = Some(v);
                 break;
             }
 
-            for &(w, _) in self.possible_next(v).iter(){
+            //println!("at {v:?}");
+            for &w in self.possible_next(v).iter() {
+                // println!(" considering {w:?}");
                 if visited.contains(&w) {
                     continue;
                 }
 
                 visited.insert(w);
                 parent.insert(w, v);
+                q.push_back(w);
             }
+        };
+
+
+        let found = found?;
+        //let mut ret = visited.iter().cloned().collect();
+        let mut ret = Vec::new();
+
+        let mut curr = target;
+
+        while curr != start {
+            let p = *parent.get(&curr).unwrap();
+            ret.push(p);
+            curr = p;
         }
-
-
-        let mut ret = visited.iter().cloned().collect();
-
-        // let mut curr = target;
-
-        // return Vec::new();
-        // while curr != start {
-        //     let p = *parent.get(&curr).unwrap_or(&(69420, 69420));
-        //     ret.push(p);
-        //     curr = p;
-        // }
-
-
-        ret
-
-
+        
+        Some(ret)
     }
 }
 
@@ -91,9 +89,7 @@ fn main() {
         .lock()
         .lines()
         .flatten()
-        .map(|line| {
-            line.chars().collect::<Vec<_>>()
-        })
+        .map(|line| line.chars().collect::<Vec<_>>())
         .collect();
 
     let (rowlen, nrows) = (input[0].len(), input.len());
@@ -109,12 +105,20 @@ fn main() {
     let e = input.get_mut(end).unwrap();
     *e = 'z';
 
-    let g = Graph {graph: input};
+    let g = Graph { graph: input.clone() };
 
-
-    let path = g.shortest_path_bfs(start, end);
+    let path = g.shortest_path_bfs(start, end).unwrap();
+    let pathlen = path.len();
 
     dbg!(&path);
+    println!("part 1: {pathlen}");
+
+    let p2 = input.indexed_iter().filter(|(_, &c)| c == 'a').filter_map(|(coord, c)| {
+        //println!("start point: {coord:?}, {c}");
+        let path = g.shortest_path_bfs(coord, end)?;
+        Some(path.len())
+    }).min().unwrap();
+    println!("part 2: {p2}");
 
 
 }
