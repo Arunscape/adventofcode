@@ -43,7 +43,7 @@ impl Monke {
         }
     }
 
-    pub fn inspect(&mut self) -> Option<(usize, usize)> {
+    pub fn inspect(&mut self, modulo: usize) -> Option<(usize, usize)> {
         let x = self.items.pop_front()?;
         self.n_inspected += 1;
 
@@ -52,9 +52,11 @@ impl Monke {
 
         let x = self.do_op(x);
 
-        println!("    worry level is {:?} to = {}", self.operation, x);
-
-        let x = x / 3;
+//        println!("    worry level is {:?} to = {}", self.operation, x);
+//
+//        let x = x / 3;
+//
+        let x = x % modulo;
 
         println!("    monke gets bored. worry level is divided by 3 to {x}");
 
@@ -155,12 +157,14 @@ fn main() -> Result<(), Box<dyn std::error::Error>> {
 
     let n_monke: usize = *monkes.keys().max().unwrap();
 
+    let modulo: usize = monkes.values().map(|v| v.testnum).product();
+
     dbg!(&monkes);
 
     println!("monke: 0 {:?}", monkes[&0]);
-    while n_round <= 20 {
+    while n_round <= 10000 {
         let m = monkes.get_mut(&curr).unwrap();
-        if let Some((n, mon)) = m.inspect() {
+        if let Some((n, mon)) = m.inspect(modulo) {
             let dest = monkes.get_mut(&n).unwrap();
             dest.items.push_back(mon);
             //println!(
