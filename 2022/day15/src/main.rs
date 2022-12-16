@@ -5,7 +5,7 @@ type Point = (isize, isize);
 
 #[derive(Copy, Clone, Debug)]
 enum Block {
-    Sensor,
+    Sensor(isize),
     Beacon,
     Empty,
 }
@@ -22,23 +22,52 @@ impl Grid {
         Self { grid }
     }
 
+    pub fn insert(&mut self, sensor_coord: Point, closest_beacon: Point) {
+        let md = Self::manhattan_distance(sensor_coord, closest_beacon);
+
+        self.grid.insert(closest_beacon, Block::Beacon);
+        self.grid.insert(sensor_coord, Block::Sensor(md));
+    }
+
+    #[deprecated]
     pub fn insert_and_mark(&mut self, sensor_coord: Point, closest_beacon: Point) {
         let md = Self::manhattan_distance(sensor_coord, closest_beacon);
 
         self.grid.insert(closest_beacon, Block::Beacon);
-        self.grid.insert(sensor_coord, Block::Sensor);
+        self.grid.insert(sensor_coord, Block::Sensor(md));
 
-        for &point in self.within_manhattan_distance_of(sensor_coord, md).iter() {
-
+        for &point in self
+            .points_within_manhattan_distance_of(sensor_coord, md)
+            .iter()
+        {
             self.grid.entry(point).or_insert(Block::Empty);
-
         }
     }
+
+    pub fn sensor_in_range(&self, point: Point) -> bool {
+        for (&coord, &sensor) in self.grid.iter() {
+            match sensor {
+                Block::Sensor(dist) => {
+                    if Self::manhattan_distance(coord, point) <= dist {
+                        return true;
+                    }
+                }
+                _ => continue,
+            }
+        }
+        false
+    }
+
     pub fn manhattan_distance((x1, y1): Point, (x2, y2): Point) -> isize {
         (x1 - x2).abs() + (y1 - y2).abs()
     }
 
-    pub fn within_manhattan_distance_of(&self, (x, y): Point, distance: isize) -> Vec<Point> {
+    #[deprecated]
+    pub fn points_within_manhattan_distance_of(
+        &self,
+        (x, y): Point,
+        distance: isize,
+    ) -> Vec<Point> {
         let (minx, maxx) = (x - distance, x + distance);
         let (miny, maxy) = (y - distance, y + distance);
 
@@ -47,6 +76,34 @@ impl Grid {
             .filter(|&point| Self::manhattan_distance((x, y), point) <= distance)
             .collect();
         v
+    }
+
+    pub fn count_non_beacon_spaces_in_row(&self, y: isize) -> usize {
+        let (minx, maxx) = self.x_range();
+
+
+        (minx..=maxx).map(|x| (x, y)).filter(|&point| self.sensor_in_range(point)).filter(|point| {
+            !self.grid.get(point).is_some()
+        }).count()
+    }
+
+    pub fn x_range(&self) -> (isize, isize) {
+        let minx = self.grid.iter().map(|(&(x, _), &block)| {
+            match block {
+                Block::Sensor(d) => x - d,
+                _ => x
+            }
+        }).min().unwrap();
+        let maxx = self.grid.iter().map(|(&(x, _), &block)| {
+            match block {
+                Block::Sensor(d) => x + d,
+                _ => x
+            }
+        }).max().unwrap();
+
+        (minx, maxx)
+
+
     }
 }
 
@@ -72,20 +129,14 @@ fn main() {
     let mut grid = Grid::new();
 
     for &(sensor, beacon) in input.iter() {
-        grid.insert_and_mark(sensor, beacon);
+        grid.insert(sensor, beacon);
     }
 
-    let part1_testinput = grid
-        .grid
-        .iter()
-        .filter(|(&(_, y), block)| y == 10 && matches!(block, Block::Empty | Block::Sensor))
-        .count();
+    let part1_testinput = grid.count_non_beacon_spaces_in_row(10);
     dbg!(part1_testinput);
-
-    let part1 = grid
-        .grid
-        .iter()
-        .filter(|(&(_, y), block)| y == 2000000 && matches!(block, Block::Empty | Block::Sensor))
-        .count();
+    let part1 = grid.count_non_beacon_spaces_in_row(2000000);
     dbg!(part1);
+
+
+
 }
