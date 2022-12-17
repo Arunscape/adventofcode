@@ -128,54 +128,45 @@ impl Grid {
         // new approach: let's try walking around the edges of the sensors:
         // much less points to check
         //
-        let (point, _) = self
+        let point = self
             .grid
             .iter()
             .filter_map(|(&point, &block)| match block {
                 Block::Sensor(d) => Some((point, d + 1)),
                 _ => None,
             })
-            .find(|&((x, y), radius)| {
-                //            println!("checking q1 for sensor {},{}", x, y);
-                // quadrant 1
-                let ret = (x..=x + radius)
-                    .map(|xx| (xx, y + radius - xx))
-                    .filter(|point| !self.grid.contains_key(point))
+            .find_map(|((x, y), radius)| {
+                // quadrant 1: +x +y
+                let ret = (0..=radius)
+                    .map(|xx| (xx, radius - xx))
+                    // q2 -x +y
+                    .chain((-radius..=0).map(|xx| (xx, radius + xx)))
+                    // q3 -x -y
+                    .chain((-radius..=0).map(|xx| (xx, -xx - radius)))
+                    // q4 +x -y
+                    .chain((0..=radius).map(|xx| (xx, xx - radius)))
+                    .map(|(xx, yy)| (x + xx, y + yy))
                     .filter(|(xx, yy)| (min..=max).contains(xx) && (min..=max).contains(yy))
-                    .find(|&point| self.sensor_in_range(point))
-                    .or_else(|| {
-                        //                 println!("none in q1 for sensor {},{} checking q2", x, y);
-                        let q2 = (x - radius..=x)
-                            .map(|xx| (xx, y + radius - xx))
-                            .filter(|point| !self.grid.contains_key(point))
-                            .filter(|(xx, yy)| (min..=max).contains(xx) && (min..=max).contains(yy))
-                            .find(|&point| self.sensor_in_range(point));
-                        q2
-                    })
-                    .or_else(|| {
-                        //              println!("none in q2 for sensor {},{} checking q2", x, y);
-                        let q3 = (x - radius..=x)
-                            .map(|xx| (xx, y - radius + xx))
-                            .filter(|point| !self.grid.contains_key(point))
-                            .filter(|(xx, yy)| (min..=max).contains(xx) && (min..=max).contains(yy))
-                            .find(|&point| self.sensor_in_range(point));
-                        q3
-                    })
-                    .or_else(|| {
-                        //           println!("none in q1 for sensor {},{} checking q2", x, y);
-                        let q4 = (x..=x + radius)
-                            .map(|xx| (xx, y - radius + xx))
-                            .filter(|point| !self.grid.contains_key(point))
-                            .filter(|(xx, yy)| (min..=max).contains(xx) && (min..=max).contains(yy))
-                            .find(|&point| self.sensor_in_range(point));
-                        q4
-                    });
+                    .filter(|point| !self.grid.contains_key(point))
+                    .find(|&point| !self.sensor_in_range(point));
 
-                //    println!("found point {:?} by walking around perimeter of {},{} with distance {}", ret,x,y,radius);
-                ret.is_some()
+                println!(
+                    "I am returning {ret:?}, and {}",
+                    if let Some(p) = ret {
+                        if self.grid.contains_key(&p) {
+                            "it's in the map"
+                        } else {
+                            "it's NOT in the map"
+                        }
+                    } else {
+                        " next"
+                    }
+                );
+                ret
             })?;
 
         let (x, y) = point;
+        dbg!(&point, &x, &y);
         let tuning_freq = x * 4000000 + y;
 
         Some((point, tuning_freq))
@@ -213,7 +204,8 @@ fn main() {
     dbg!(part1);
 
     let part2_testinput = grid.find_distress_beacon_new(0, 20);
-    dbg!(part2_testinput);
+    println!("part 2 testinput: {part2_testinput:?}");
+
     let part2 = grid.find_distress_beacon_new(0, 4000000);
     dbg!(part2);
 }
