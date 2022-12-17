@@ -1,5 +1,6 @@
 use std::collections::HashMap;
 use std::io::{self, BufRead};
+use std::ops::Range;
 
 type Point = (isize, isize);
 
@@ -81,29 +82,49 @@ impl Grid {
     pub fn count_non_beacon_spaces_in_row(&self, y: isize) -> usize {
         let (minx, maxx) = self.x_range();
 
-
-        (minx..=maxx).map(|x| (x, y)).filter(|&point| self.sensor_in_range(point)).filter(|point| {
-            !self.grid.get(point).is_some()
-        }).count()
+        (minx..=maxx)
+            .map(|x| (x, y))
+            .filter(|&point| self.sensor_in_range(point))
+            .filter(|point| !self.grid.get(point).is_some())
+            .count()
     }
 
     pub fn x_range(&self) -> (isize, isize) {
-        let minx = self.grid.iter().map(|(&(x, _), &block)| {
-            match block {
+        let minx = self
+            .grid
+            .iter()
+            .map(|(&(x, _), &block)| match block {
                 Block::Sensor(d) => x - d,
-                _ => x
-            }
-        }).min().unwrap();
-        let maxx = self.grid.iter().map(|(&(x, _), &block)| {
-            match block {
+                _ => x,
+            })
+            .min()
+            .unwrap();
+        let maxx = self
+            .grid
+            .iter()
+            .map(|(&(x, _), &block)| match block {
                 Block::Sensor(d) => x + d,
-                _ => x
-            }
-        }).max().unwrap();
+                _ => x,
+            })
+            .max()
+            .unwrap();
 
         (minx, maxx)
+    }
 
+    pub fn find_distress_beacon(
+        &self,
+        min: isize,
+        max: isize,
+    ) -> Option<(Point, isize)> {
+        let point = (min..=max)
+            .flat_map(|x| (min..=max).map(move |y| (x, y)))
+            .find(|point| !self.grid.contains_key(point) && !self.sensor_in_range(*point))?;
 
+        let (x, y) = point;
+        let tuning_freq = x * 4000000 + y;
+
+        Some((point, tuning_freq))
     }
 }
 
@@ -138,5 +159,8 @@ fn main() {
     dbg!(part1);
 
 
-
+    let part2_testinput = grid.find_distress_beacon(0, 20);
+    dbg!(part2_testinput);
+    let part2 = grid.find_distress_beacon(0, 4000000);
+    dbg!(part2);
 }
