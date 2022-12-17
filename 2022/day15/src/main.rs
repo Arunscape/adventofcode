@@ -1,6 +1,6 @@
+#![allow(dead_code, deprecated)]
 use std::collections::HashMap;
 use std::io::{self, BufRead};
-use std::ops::Range;
 
 type Point = (isize, isize);
 
@@ -30,7 +30,9 @@ impl Grid {
         self.grid.insert(sensor_coord, Block::Sensor(md));
     }
 
-    #[deprecated]
+    #[deprecated(
+        note = "this is REALLY shit code that will not only likely not finish but you will also likely run out of RAM before it even gets close"
+    )]
     pub fn insert_and_mark(&mut self, sensor_coord: Point, closest_beacon: Point) {
         let md = Self::manhattan_distance(sensor_coord, closest_beacon);
 
@@ -112,7 +114,9 @@ impl Grid {
         (minx, maxx)
     }
 
-    #[deprecated]
+    #[deprecated(
+        note = "this is a pretty shit brute force method that may not finish running in your lifetime"
+    )]
     pub fn find_distress_beacon(&self, min: isize, max: isize) -> Option<(Point, isize)> {
         let point = (min..=max)
             .flat_map(|x| (min..=max).map(move |y| (x, y)))
@@ -137,7 +141,7 @@ impl Grid {
             })
             .find_map(|((x, y), radius)| {
                 // quadrant 1: +x +y
-                let ret = (0..=radius)
+                (0..=radius)
                     .map(|xx| (xx, radius - xx))
                     // q2 -x +y
                     .chain((-radius..=0).map(|xx| (xx, radius + xx)))
@@ -148,25 +152,10 @@ impl Grid {
                     .map(|(xx, yy)| (x + xx, y + yy))
                     .filter(|(xx, yy)| (min..=max).contains(xx) && (min..=max).contains(yy))
                     .filter(|point| !self.grid.contains_key(point))
-                    .find(|&point| !self.sensor_in_range(point));
-
-                println!(
-                    "I am returning {ret:?}, and {}",
-                    if let Some(p) = ret {
-                        if self.grid.contains_key(&p) {
-                            "it's in the map"
-                        } else {
-                            "it's NOT in the map"
-                        }
-                    } else {
-                        " next"
-                    }
-                );
-                ret
+                    .find(|&point| !self.sensor_in_range(point))
             })?;
 
         let (x, y) = point;
-        dbg!(&point, &x, &y);
         let tuning_freq = x * 4000000 + y;
 
         Some((point, tuning_freq))
