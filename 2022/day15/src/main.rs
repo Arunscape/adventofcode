@@ -112,14 +112,68 @@ impl Grid {
         (minx, maxx)
     }
 
-    pub fn find_distress_beacon(
-        &self,
-        min: isize,
-        max: isize,
-    ) -> Option<(Point, isize)> {
+    #[deprecated]
+    pub fn find_distress_beacon(&self, min: isize, max: isize) -> Option<(Point, isize)> {
         let point = (min..=max)
             .flat_map(|x| (min..=max).map(move |y| (x, y)))
             .find(|point| !self.grid.contains_key(point) && !self.sensor_in_range(*point))?;
+
+        let (x, y) = point;
+        let tuning_freq = x * 4000000 + y;
+
+        Some((point, tuning_freq))
+    }
+
+    pub fn find_distress_beacon_new(&self, min: isize, max: isize) -> Option<(Point, isize)> {
+        // new approach: let's try walking around the edges of the sensors:
+        // much less points to check
+        //
+        let (point, _) = self
+            .grid
+            .iter()
+            .filter_map(|(&point, &block)| match block {
+                Block::Sensor(d) => Some((point, d + 1)),
+                _ => None,
+            })
+            .find(|&((x, y), radius)| {
+                //            println!("checking q1 for sensor {},{}", x, y);
+                // quadrant 1
+                let ret = (x..=x + radius)
+                    .map(|xx| (xx, y + radius - xx))
+                    .filter(|point| !self.grid.contains_key(point))
+                    .filter(|(xx, yy)| (min..=max).contains(xx) && (min..=max).contains(yy))
+                    .find(|&point| self.sensor_in_range(point))
+                    .or_else(|| {
+                        //                 println!("none in q1 for sensor {},{} checking q2", x, y);
+                        let q2 = (x - radius..=x)
+                            .map(|xx| (xx, y + radius - xx))
+                            .filter(|point| !self.grid.contains_key(point))
+                            .filter(|(xx, yy)| (min..=max).contains(xx) && (min..=max).contains(yy))
+                            .find(|&point| self.sensor_in_range(point));
+                        q2
+                    })
+                    .or_else(|| {
+                        //              println!("none in q2 for sensor {},{} checking q2", x, y);
+                        let q3 = (x - radius..=x)
+                            .map(|xx| (xx, y - radius + xx))
+                            .filter(|point| !self.grid.contains_key(point))
+                            .filter(|(xx, yy)| (min..=max).contains(xx) && (min..=max).contains(yy))
+                            .find(|&point| self.sensor_in_range(point));
+                        q3
+                    })
+                    .or_else(|| {
+                        //           println!("none in q1 for sensor {},{} checking q2", x, y);
+                        let q4 = (x..=x + radius)
+                            .map(|xx| (xx, y - radius + xx))
+                            .filter(|point| !self.grid.contains_key(point))
+                            .filter(|(xx, yy)| (min..=max).contains(xx) && (min..=max).contains(yy))
+                            .find(|&point| self.sensor_in_range(point));
+                        q4
+                    });
+
+                //    println!("found point {:?} by walking around perimeter of {},{} with distance {}", ret,x,y,radius);
+                ret.is_some()
+            })?;
 
         let (x, y) = point;
         let tuning_freq = x * 4000000 + y;
@@ -158,9 +212,8 @@ fn main() {
     let part1 = grid.count_non_beacon_spaces_in_row(2000000);
     dbg!(part1);
 
-
-    let part2_testinput = grid.find_distress_beacon(0, 20);
+    let part2_testinput = grid.find_distress_beacon_new(0, 20);
     dbg!(part2_testinput);
-    let part2 = grid.find_distress_beacon(0, 4000000);
+    let part2 = grid.find_distress_beacon_new(0, 4000000);
     dbg!(part2);
 }
