@@ -19,43 +19,49 @@ let last_digit s =
   | None -> None
   | Some i -> Some (String.get s i)
 
-let rec parse_digits s l =
+let prefixes =
+  [
+    ("0", 0);
+    ("1", 1);
+    ("2", 2);
+    ("3", 3);
+    ("4", 4);
+    ("5", 5);
+    ("6", 6);
+    ("7", 7);
+    ("8", 8);
+    ("9", 9);
+    ("one", 1);
+    ("two", 2);
+    ("three", 3);
+    ("four", 4);
+    ("five", 5);
+    ("six", 6);
+    ("seven", 7);
+    ("eight", 8);
+    ("nine", 9);
+  ]
+
+let rec first_digit_2 s =
   match s with
-  | "" -> l
+  | "" -> None
   | _ -> (
-      let first_char = String.get s 0 in
-      let len = String.length s in
-      let rest_of_string = String.drop_prefix s 1 in
-      match first_char with
-      | '0' .. '9' ->
-          parse_digits (String.drop_prefix s 1)
-            (((first_char |> Char.to_int) - Char.to_int '0') :: l)
-      | _ ->
-          if len >= 3 then
-            match String.sub s ~pos:0 ~len:3 with
-            | "one" -> parse_digits (String.drop_prefix s 3) (1 :: l)
-            | "two" -> parse_digits (String.drop_prefix s 3) (2 :: l)
-            | "six" -> parse_digits (String.drop_prefix s 3) (6 :: l)
-            | _ ->
-                if len >= 4 then
-                  match String.sub s ~pos:0 ~len:4 with
-                  | "zero" -> parse_digits (String.drop_prefix s 4) (0 :: l)
-                  | "four" -> parse_digits (String.drop_prefix s 4) (4 :: l)
-                  | "five" -> parse_digits (String.drop_prefix s 4) (5 :: l)
-                  | "nine" -> parse_digits (String.drop_prefix s 4) (9 :: l)
-                  | _ ->
-                      if len >= 5 then
-                        match String.sub s ~pos:0 ~len:5 with
-                        | "three" ->
-                            parse_digits (String.drop_prefix s 5) (3 :: l)
-                        | "seven" ->
-                            parse_digits (String.drop_prefix s 5) (7 :: l)
-                        | "eight" ->
-                            parse_digits (String.drop_prefix s 5) (8 :: l)
-                        | _ -> parse_digits rest_of_string l
-                      else parse_digits rest_of_string l
-                else parse_digits rest_of_string l
-          else parse_digits rest_of_string l)
+      match
+        List.find prefixes ~f:(fun (prefix, _) -> String.is_prefix s ~prefix)
+      with
+      | None -> first_digit_2 (String.sub s ~pos:1 ~len:(String.length s - 1))
+      | Some (_, n) -> Some n)
+
+let rec last_digit_2 s =
+  match s with
+  | "" -> None
+  | _ -> (
+      match
+        List.find prefixes ~f:(fun (prefix, _) ->
+            String.is_suffix s ~suffix:prefix)
+      with
+      | None -> last_digit_2 (String.sub s ~pos:0 ~len:(String.length s - 1))
+      | Some (_, n) -> Some n)
 
 let () =
   let input = read_input () in
@@ -74,8 +80,9 @@ let () =
 
   let part_two =
     input
-    |> List.map ~f:(fun s -> parse_digits s [])
-    |> List.map ~f:(fun l -> List.hd_exn l + ((List.rev l |> List.hd_exn) * 10))
+    |> List.map ~f:(fun s -> (first_digit_2 s, last_digit_2 s))
+    |> List.filter_map ~f:(fun x ->
+           match x with Some a, Some b -> Some ((a * 10) + b) | _ -> None)
     |> sum |> Int.to_string
   in
 
