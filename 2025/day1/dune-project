@@ -1,0 +1,11 @@
+(lang dune 3.10)
+
+(name day1_2025)
+
+(generate_opam_files true)
+
+(package
+ (name day1_2025)
+ (synopsis "Advent of Code 2025 Day 1")
+ (description "Advent of Code 2025 Day 1")
+ (depends ocaml base stdio aoc_utils))

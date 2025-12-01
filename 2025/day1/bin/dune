@@ -1,0 +1,11 @@
+(executable
+ (public_name day1_2025)
+ (name main)
+ (libraries base stdio aoc_utils)
+ (preprocess
+  (pps ppx_inline_test)))
+
+(alias
+ (name default)
+ (deps
+  (alias day1_2025)))

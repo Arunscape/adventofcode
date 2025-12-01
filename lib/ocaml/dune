@@ -1,0 +1,4 @@
+(library
+ (name aoc_utils)
+ (public_name aoc_utils)
+ (libraries base stdio))
