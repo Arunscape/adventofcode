@@ -10,44 +10,40 @@ let rotate current_pos dir =
   | L n-> (current_pos - n) % ticks
   | R n -> (current_pos + n) % ticks
 
-
 let parse_direction s =
-  let dir_char = String.get s 0 in
-  let amount_str = String.sub s ~pos:1 ~len:(String.length s - 1) in
-  let amount = Int.of_string amount_str in
-  match dir_char with
-  | 'R' -> R amount
-  | 'L' -> L amount
-  | _ -> failwith "Invalid direction"
+  match String.chop_prefix s ~prefix:"R" with
+  | Some amount_str -> R (Int.of_string amount_str)
+  | None ->
+    (match String.chop_prefix s ~prefix:"L" with
+    | Some amount_str -> L (Int.of_string amount_str)
+    | None -> failwith "Invalid direction")
 
 (*the number of times the dial is pointing at 0 after any rotation in the sequence*)
-let solve_1 input = 
-  let position = ref 50 in
-  let ans = ref 0 in
-  List.iter input ~f:(fun dir ->
-    position := rotate !position dir;
-    if !position = 0 then ans := !ans + 1
-  );
-  !ans
+let solve_1 input =
+  let _, count =
+    List.fold_left input ~init:(50, 0) ~f:(fun (pos, ans) dir ->
+      let pos' = rotate pos dir in
+      let ans' = if pos' = 0 then ans + 1 else ans in
+      (pos', ans')
+    )
+  in
+  count
 
-(*supposed to count the number of times any click causes the dial to point at 0, regardless of whether it happens during a rotation or at the end of one*)
-let rec rotate_part_2 current_pos dir acc =
+let count_zeros start_pos dir =
+  let floor_div a = Int.(round_down a ~to_multiple_of:ticks) / ticks in
   match dir with
-  | L n -> if n = 0 then acc else 
-      let next_pos = (current_pos - 1) % ticks in
-      let new_acc = if next_pos = 0 then acc + 1 else acc in
-      rotate_part_2 next_pos (L (n - 1)) new_acc
-  | R n -> if n = 0 then acc else 
-      let next_pos = (current_pos + 1) % ticks in
-      let new_acc = if next_pos = 0 then acc + 1 else acc in
-      rotate_part_2 next_pos (R (n - 1)) new_acc
+  | R n -> floor_div (start_pos + n) - floor_div start_pos
+  | L n -> floor_div (start_pos - 1) - floor_div (start_pos - n - 1)
 
-let solve_2 (input : direction list) =
-  let (final_acc, _) = List.fold_left input ~init:(0, 50) ~f:(fun (acc, pos) dir ->
-    let new_acc = rotate_part_2 pos dir acc in
-    let new_pos = rotate pos dir in
-    (new_acc, new_pos)
-  ) in
+
+let solve_2 input =
+  let final_acc, _ =
+    List.fold_left input ~init:(0, 50) ~f:(fun (acc, pos) dir ->
+      let acc' = acc + count_zeros pos dir in
+      let pos' = rotate pos dir in
+      (acc', pos')
+    )
+  in
   final_acc
 
 let () =
