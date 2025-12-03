@@ -69,9 +69,9 @@ let () =
     input
     |> List.map ~f:(fun s -> (first_digit s, last_digit s))
     |> List.map ~f:(fun x ->
-           match x with
-           | Some a, Some b -> Some (Char.to_string a ^ Char.to_string b)
-           | _ -> None)
+        match x with
+        | Some a, Some b -> Some (Char.to_string a ^ Char.to_string b)
+        | _ -> None)
     |> List.filter_map ~f:(fun x -> x)
     |> List.map ~f:Int.of_string |> sum |> Int.to_string
   in
@@ -82,7 +82,7 @@ let () =
     input
     |> List.map ~f:(fun s -> (first_digit_2 s, last_digit_2 s))
     |> List.filter_map ~f:(fun x ->
-           match x with Some a, Some b -> Some ((a * 10) + b) | _ -> None)
+        match x with Some a, Some b -> Some ((a * 10) + b) | _ -> None)
     |> sum |> Int.to_string
   in
 
